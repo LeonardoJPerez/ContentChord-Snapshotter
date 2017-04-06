@@ -1,0 +1,18 @@
+{
+  "name": "contentchord-snapshotter",
+  "version": "1.0.0",
+  "description": "Webpage Snapshot service bound to a MessageQueue.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "snapshot",
+    "contentchord"
+  ],
+  "dependencies": {
+    "webshot": "~0.18.0"
+  },
+  "author": "Leonardo J. Perez",
+  "license": "ISC"
+}
