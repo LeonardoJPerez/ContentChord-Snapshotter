@@ -1,5 +1,7 @@
-const fs = require('fs');
-const webshot = require('./node_modules/node-webshot-master/lib/webshot');
+const fs = require('fs'),
+    s3Utils = require('./aws/s3Utils'),
+    uuid = require('uuid'),
+    webshot = require('./node_modules/node-webshot-master/lib/webshot');
 
 const options = {
     defaultWhiteBackground: true,
@@ -10,9 +12,18 @@ const options = {
     }
 };
 
-webshot('https://www.walmart.com/ip/FurReal-Friends-JJ-My-Jumpin-Pug-Pet/42208804', 'wm.png', options, (err) => {
+const fileName = uuid.v4() + '.png';
+var s = webshot('https://www.walmart.com/ip/FurReal-Friends-JJ-My-Jumpin-Pug-Pet/42208804', fileName, options, (err, data) => {
     // screenshot now saved to google.png
     if (err) {
         console.log(err);
     }
+
+    console.log(data);
+
+    //s3Utils.putObject(fileName);
 });
+
+console.log(s);
+
+
