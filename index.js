@@ -1,18 +1,34 @@
-const fs = require('fs');
-const webshot = require('./node_modules/node-webshot-master/lib/webshot');
+const ampqConnector = require('./amqpConnector');
+const snapshot = require('./snapshot');
+const uuidV4 = require('uuid/v4');
 
-const options = {
-    defaultWhiteBackground: true,
-    renderDelay: 5000,
-    windowSize: {
-        width: 1300,
-        height: 2500
-    }
+const mqOptions = {
+    heartbeat: 60,
+    //host: '40.84.28.20',
+    host: 'localhost',
+    port: 5672,
+    prefetch: 10,
+    // username: 'nbowman',
+    // password: 'password',
+    reconnectTime: 1000,
+    chunkSize = 2
 };
 
-webshot('https://www.walmart.com/ip/FurReal-Friends-JJ-My-Jumpin-Pug-Pet/42208804', 'wm.png', options, (err) => {
-    // screenshot now saved to google.png
-    if (err) {
-        console.log(err);
-    }
-});
+console.log('Connecting to ' + mqOptions.host);
+
+const messageHandler = (msg) => {
+    console.log('Processing URL ' + msg.content.toString());
+
+    const jsonMessage = JSON.parse(msg.content.toString());
+    const url = "https://www.walmart.com/ip/FurReal-Friends-JJ-My-Jumpin-Pug-Pet/42208804"; // Test purposes
+    snapshot(jsonMessage.Uri, uuidV4(), (err) => console.log(err || "Success"));
+};
+
+const testMessageHandler = (msg) => {
+    console.log('Processing URL ' + msg.content.toString());
+
+    const url = "https://www.walmart.com/ip/FurReal-Friends-JJ-My-Jumpin-Pug-Pet/42208804"; // Test purposes
+    snapshot(url, uuidV4(), (err) => console.log(err || "Success"));
+};
+
+ampqConnector.start(mqOptions, testMessageHandler);
