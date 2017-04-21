@@ -1,5 +1,5 @@
 const fs = require('fs');
-const webshot = require('./node_modules/node-webshot/lib/webshot');
+const webshot = require('./webshot');
 
 module.exports = (url, id, cb) => {
     const options = {
