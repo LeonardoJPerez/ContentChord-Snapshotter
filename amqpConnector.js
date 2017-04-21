@@ -59,10 +59,10 @@ const whenConnected = (processCb) => {
         ch.prefetch(_config.prefetch);
 
         var msgBlock = [];
-        ch.assertQueue("UrisToProcess", { durable: true }, (err, _ok) => {
+        ch.assertQueue(_config.channel, { durable: true }, (err, _ok) => {
             if (closeOnErr(err)) return;
 
-            ch.consume("UrisToProcess", processMsg, { noAck: false });
+            ch.consume(_config.channel, processMsg, { noAck: false });
             console.log("Worker started");
         });
 
@@ -72,18 +72,25 @@ const whenConnected = (processCb) => {
                 return;
             }
 
-            console.log('Processing block of ' + msgBlock.length + 'messages.');
+            console.log('Processing block of (' + msgBlock.length + ') messages.');
 
             async.each(msgBlock, (msg, callback) => {
-                processCb(msg);
+                const error = processCb(msg);
+                if (error) {
+                    console.log("Error. Requeuing the message. \n" + result.err);
+                    ch.nack(msg, false, true);
+                } else {
+                    console.log("Success. Acknowledging the message");
+                    ch.ack(msg);
+                }
 
-                callback(); // Callback is required for Async process to exit.
+                callback();
             }, (err) => {
                 try {
-                    if (err)
+                    if (err) {
                         ch.nackAll();
-                    else
-                        ch.ackAll();
+                        console.log("Error. Requeuing message block message. \n" + result.err);
+                    }
                 } catch (e) {
                     closeOnErr(e);
                 } finally {

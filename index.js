@@ -11,7 +11,9 @@ const mqOptions = {
     // username: 'nbowman',
     // password: 'password',
     reconnectTime: 1000,
-    chunkSize: 2
+    chunkSize: 2,
+    channel: 'UrisToProcess',  // Should be UrisToSnapshots
+
 };
 
 console.log('Connecting to ' + mqOptions.host);
@@ -19,8 +21,12 @@ console.log('Connecting to ' + mqOptions.host);
 const messageHandler = (msg) => {
     console.log('Processing URL ' + msg.content.toString());
 
-    const jsonMessage = JSON.parse(msg.content.toString());
-    snapshot(jsonMessage.Uri, uuidV4(), (err) => console.log(err || "Success"));
+    const jsonMessage = JSON.parse(msg.content.toString());    
+    snapshot(jsonMessage.Uri, uuidV4(), (err, fileName) => {
+        console.log(err || "Success capturing snapshot. file: " + fileName);
+        
+        return err;
+    });
 };
 
 ampqConnector.start(mqOptions, messageHandler);

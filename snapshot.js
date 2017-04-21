@@ -11,7 +11,8 @@ module.exports = (url, id, cb) => {
         }
     };
 
-    webshot(url, `${id}.png`, options, (err) => {
-        cb(err);
+    const imageFileName = `${id}.png`;
+    webshot(url, imageFileName, options, (err) => {
+        cb(err, imageFileName);
     });
 };
