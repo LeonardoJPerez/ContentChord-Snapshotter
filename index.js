@@ -1,29 +1,37 @@
-const fs = require('fs'),
-    s3Utils = require('./aws/s3Utils'),
-    uuid = require('uuid'),
-    webshot = require('./node_modules/node-webshot-master/lib/webshot');
+const ampqConnector = require('./amqpConnector');
+const snapshot = require('./snapshot');
+const uuidV4 = require('uuid/v4');
+const fs = require('fs');
+const s3Utils = require('./aws/s3Utils');
 
-const options = {
-    defaultWhiteBackground: true,
-    renderDelay: 5000,
-    windowSize: {
-        width: 1300,
-        height: 2500
-    }
+const mqOptions = {
+    heartbeat: 60,
+    //host: '40.84.28.20',
+    host: 'localhost',
+    port: 5672,
+    prefetch: 10,
+    // username: 'nbowman', password: 'password',
+    reconnectTime: 1000,
+    chunkSize: 2,
+    channel: 'UrisToProcess', // Should be UrisToSnapshots
+
 };
 
-const fileName = uuid.v4() + '.png';
-var s = webshot('https://www.walmart.com/ip/FurReal-Friends-JJ-My-Jumpin-Pug-Pet/42208804', fileName, options, (err, data) => {
-    // screenshot now saved to google.png
-    if (err) {
-        console.log(err);
-    }
+console.log('Connecting to ' + mqOptions.host);
 
-    console.log(data);
+const messageHandler = (msg) => {
+    const jsonMessage = JSON.parse(msg.content.toString());
+    console.log('Processing URL: ' + jsonMessage.Uri);
 
-    //s3Utils.putObject(fileName);
-});
+    snapshot(jsonMessage.Uri, uuidV4(), (err, fileName) => {
+        console.log(err || "Success capturing snapshot. file: " + fileName);
 
-console.log(s);
+        //s3Utils.putObject(fileName);
 
+        console.log(data);
 
+        return err;
+    });
+};
+
+ampqConnector.start(mqOptions, messageHandler);
