@@ -10,7 +10,7 @@ AWS
     .config
     .update({
         region: bucketRegion,
-        credentials: new AWS.CognitoIdentityCredentials({IdentityPoolId: IdentityPoolId})
+        credentials: new AWS.CognitoIdentityCredentials({ IdentityPoolId: IdentityPoolId })
     });
 
 const s3 = new AWS.S3({
@@ -19,6 +19,18 @@ const s3 = new AWS.S3({
         Bucket: albumBucketName
     }
 });
+
+const _putObject = (fileName, data) => {
+    s3.putObject({
+        Key: fileName,
+        Body: new Buffer(data, 'base64')
+    }, (awsError, response) => {
+        if (awsError)
+            console.log(awsError);
+        else
+            console.log("File '" + fileName + "' uploaded. Etag: " + response.ETag);
+    });
+}
 
 module.exports = {
     listObjects: () => {
@@ -38,22 +50,14 @@ module.exports = {
             }
         });
     },
-    putObject: (fileName) => {
+    putFile: (fileName) => {
         fs.readFile(fileName, (err, data) => {
-            if (err) {
-                throw err;
-            }
+            if (err) throw err;
 
-            s3.putObject({
-                Key: uuid.v4() + '/' + fileName,
-                Body: new Buffer(data, 'binary')
-            }, (awsError, response) => {
-                if (awsError) 
-                    console.log(awsError);
-                else 
-                    console.log("File '" + fileName + "' uploaded. Etag: " + response.ETag);
-                }
-            );
+            _putObject(fileName, data);
         });
+    },
+    putObject: (fileName, data) => {
+        _putObject(fileName, data);
     }
 }

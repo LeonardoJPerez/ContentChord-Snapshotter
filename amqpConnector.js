@@ -56,35 +56,40 @@ const whenConnected = (processCb) => {
             console.log("[AMQP] channel closed");
         });
 
-        ch.prefetch(_config.prefetch);
+        ch.prefetch(_config.chunkSize);
 
         var msgBlock = [];
         ch.assertQueue(_config.channel, { durable: true }, (err, _ok) => {
             if (closeOnErr(err)) return;
 
-            ch.consume(_config.channel, processMsg, { noAck: false });
+            ch.consume(_config.channel, processMsg);
             console.log("Worker started");
         });
 
         const processMsg = (msg) => {
             if (msgBlock.length < _config.chunkSize) {
                 msgBlock.push(msg);
-                return;
+                if (msgBlock.length < _config.chunkSize) {
+                    return;
+                }
             }
 
             console.log('Processing block of (' + msgBlock.length + ') messages.');
 
             async.each(msgBlock, (msg, callback) => {
-                const error = processCb(msg);
-                if (error) {
-                    console.log("Error. Requeuing the message. \n" + result.err);
-                    ch.nack(msg, false, true);
-                } else {
-                    console.log("Success. Acknowledging the message");
-                    ch.ack(msg);
-                }
+                processCb(msg)
+                    .then((result) => {
+                        if (result) {
+                            console.log("Success. Acknowledging the message");
+                            ch.ack(msg);
+                            //ch.nack(msg, false, true);
+                        } else {
+                            console.log("Error. Requeuing the message. \n" + result.err);
+                            ch.nack(msg, false, true);
+                        }
 
-                callback();
+                        callback();
+                    });
             }, (err) => {
                 try {
                     if (err) {

@@ -8,7 +8,7 @@ var url = require('url')
   , extensions = ['jpeg', 'jpg', 'png', 'pdf']
   , siteTypes = ['url', 'html', 'file'];
 
-module.exports = function() {
+module.exports = function () {
 
   // Process arguments
   var args = Array.prototype.slice.call(arguments, 0);
@@ -50,12 +50,12 @@ module.exports = function() {
       } else {
         options = arg;
       }
-    break;
+      break;
 
     case 2:
       path = args.shift();
       options = args.shift();
-    break;
+      break;
   }
 
   var streaming = !path;
@@ -64,7 +64,7 @@ module.exports = function() {
   // Apply the compiled phantomjs path only if it compiled successfully
   try {
     defaults.phantomPath = require('phantomjs-prebuilt').path;
-  } catch (ex) {}
+  } catch (ex) { }
 
   options = processOptions(options, defaults);
 
@@ -92,7 +92,7 @@ module.exports = function() {
   }
 
   // Remove the given file if it already exists, then call phantom
-  var spawn = function() {
+  var spawn = function () {
     if (options.siteType === 'html') {
       var obj = tmp.fileSync();
       var tmpPath = obj.name;
@@ -107,9 +107,9 @@ module.exports = function() {
   };
 
   if (path) {
-    fs.exists(path, function(exists) {
+    fs.exists(path, function (exists) {
       if (exists) {
-        fs.unlink(path, function(err) {
+        fs.unlink(path, function (err) {
           if (err) return cb(err);
           return spawn();
         });
@@ -150,14 +150,14 @@ function processOptions(options, defaults) {
   var withDefaults = optUtils.mergeObjects(options, defaults);
 
   // Convert function options to strings for later JSON serialization
-  optUtils.phantomCallback.forEach(function(optionName) {
+  optUtils.phantomCallback.forEach(function (optionName) {
     var fnArg = withDefaults[optionName];
 
     if (fnArg) {
       if (toString.call(fnArg) === '[object Function]') {
         withDefaults[optionName] = {
           fn: fnArg.toString()
-        , context: {}
+          , context: {}
         };
       } else {
         fnArg.fn = fnArg.fn.toString();
@@ -208,7 +208,7 @@ function spawnPhantom(site, path, streaming, options, cb) {
 
   // Only set the timer if the timeout has been specified (by default it's not)
   if (options.timeout) {
-    timeoutID = setTimeout(function() {
+    timeoutID = setTimeout(function () {
 
       // The phantomjs process didn't exit in time.
       // Double-check we didn't already call the callback already as that would
@@ -223,7 +223,7 @@ function spawnPhantom(site, path, streaming, options, cb) {
 
         // Call our callback.
         var err = new Error('PhantomJS did not respond within the given ' +
-                            'timeout setting.');
+          'timeout setting.');
         if (cb) return cb(err);
         s.emit('error', err);
       }
@@ -231,7 +231,7 @@ function spawnPhantom(site, path, streaming, options, cb) {
   }
 
   if (!streaming) {
-    phantomProc.stderr.on('data', function(data) {
+    phantomProc.stderr.on('data', function (data) {
       if (options.errorIfJSException) {
         calledCallback = true;
         clearTimeout(timeoutID);
@@ -239,7 +239,7 @@ function spawnPhantom(site, path, streaming, options, cb) {
       }
     });
 
-    phantomProc.on('exit', function(code) {
+    phantomProc.on('exit', function (code) {
       if (!calledCallback) {
         calledCallback = true;
 
@@ -254,18 +254,18 @@ function spawnPhantom(site, path, streaming, options, cb) {
     var s = new stream.Stream();
     s.readable = true;
 
-    phantomProc.stdout.on('data', function(data) {
+    phantomProc.stdout.on('data', function (data) {
       clearTimeout(timeoutID);
-      s.emit('data', new Buffer(''+data, 'base64'));
+      s.emit('data', new Buffer('' + data, 'base64'));
     });
 
-    phantomProc.stderr.on('data', function(data) {
+    phantomProc.stderr.on('data', function (data) {
       if (options.errorIfJSException) {
-        s.emit('error', ''+data);
+        s.emit('error', '' + data);
       }
     });
 
-    phantomProc.on('exit', function() {
+    phantomProc.on('exit', function () {
       s.emit('end');
     });
 

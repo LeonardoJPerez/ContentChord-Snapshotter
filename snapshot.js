@@ -1,18 +1,46 @@
 const fs = require('fs');
-const webshot = require('./webshot');
+const Phantom = require('phantom');
+const async = require('asyncawait/async');
+const await = require('asyncawait/await');
 
-module.exports = (url, id, cb) => {
-    const options = {
-        defaultWhiteBackground: true,
-        renderDelay: 5000,
-        windowSize: {
-            width: 1300,
-            height: 2500
-        }
-    };
+const options = {
+    windowSize: {
+        width: 1300,
+        height: 2500
+    }
+};
 
-    const imageFileName = `${id}.png`;
-    webshot(url, imageFileName, options, (err) => {
-        cb(err, imageFileName);
-    });
+const _phInstanceFactory = async(() => {
+    const p = await(Phantom.create());
+    return p;
+});
+
+module.exports = (url, cb) => {
+    return _phInstanceFactory()
+        .then((instance) => {
+            return instance.createPage()
+                .then(page => {
+                    return page
+                        .open(url)
+                        .then(status => {
+                            console.log('Request Status: ' + status);
+                            return page.evaluate(function () {
+                                document.body.bgColor = 'white';
+                            }).then(() => {
+                                return page.property('viewportSize', options.windowSize);
+                            });
+                        })
+                        .then(arg => {
+                            return page
+                                .renderBase64()
+                                //.render(name)
+                                .then(data => {
+                                    return cb(null, data);
+                                });
+                        });
+                }).catch(error => {
+                    cb(error, null);
+                    instance.exit();
+                });
+        });
 };
