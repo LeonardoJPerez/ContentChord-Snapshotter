@@ -1,10 +1,8 @@
-const ampqConnector = require('./amqpConnector');
-const snapshot = require('./snapshot');
+const ampqConnector = require('./lib/amqpConnector');
+const snapshot = require('./lib/snapshot');
 const uuidV4 = require('uuid/v4');
-const fs = require('fs');
-const s3Utils = require('./aws/s3Utils');
+const s3Utils = require('./lib/aws/s3Utils');
 const async = require('asyncawait/async');
-const await = require('asyncawait/await');
 
 const mqOptions = {
     heartbeat: 60,
@@ -36,10 +34,8 @@ const messageHandler = (msg) => {
         });
     });
 
-
     const jsonMessage = JSON.parse(msg.content.toString());
-    return getScreenshot(jsonMessage)
-        .then((result) => result);
+    return getScreenshot(jsonMessage).then((result) => result);
 };
 
 ampqConnector.start(mqOptions, messageHandler);
